@@ -3,7 +3,9 @@ body {
     color: whitesmoke;
 }
 
-
+.invisible {
+  display: none ;
+}
 
 
 

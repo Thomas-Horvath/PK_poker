@@ -3,20 +3,52 @@ const newGameButton = document.querySelector('.js-new-game-button');
 const playerCardsContainer = document.querySelector('.js-player-cards-container');
 const chipCountContainer = document.querySelector('.js-chip-count-container');
 const potContainer = document.querySelector('.js-pot-container');
-// Létrehozunk egy globális változót a deck id tárolására. Tudatosan nem adunk neki értéket (null).
-let deckId = null;
+const betArea = document.querySelector('.js-bet-area');
+const betSlider = document.querySelector('#bet-amount');
 
-// kártya változó létrehozása.
-let playerCards = [];
 
-// játékos zsetonjai
-let playerChips = 100;
+//* program állapota
+let {
+    deckId,   // Létrehozunk egy globális változót a deck id tárolására. Tudatosan nem adunk neki értéket (null).
+    playerCards,   // kártya változó létrehozása.
+    playerChips,   // játékos zsetonjai
+    computerChips,  // számítógép zsetonjai
+    pot   // kassza értéke
+} = getinitalState();
 
-// számítógép zsetonjai
-let computerChips = 100;
 
-// kassza értéke
-let pot = 0;
+function getinitalState() {
+    return {
+        deckId: null,
+        playerCards: [],
+        playerChips: 100,
+        computerChips: 100,
+        pot: 0
+    };
+}
+
+function initialize() {
+    deckId = null;
+    playerCards = [];
+    playerChips = 100;
+    computerChips = 100;
+    pot = 0;
+}
+
+// tud e licitálni
+function canBet() {
+    return playerCards.length === 2 && playerChips > 0 && pot === 0;
+}
+
+//slider renderelése
+function renderSlider() {
+    if (canBet()) {
+        betArea.classList.remove('invisible')
+    } else {
+        betArea.classList.add('invisible')
+    }
+}
+
 
 // Esemenyfigyelőt adunk a gombra, klikk eseményre lefut a  startGame függvény
 newGameButton.addEventListener('click', startGame);
@@ -60,6 +92,7 @@ function render() {
     renderPlayerCards();
     renderChips();
     renderPot();
+    renderSlider();
 };
 
 
