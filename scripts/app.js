@@ -6,6 +6,7 @@ const potContainer = document.querySelector('.js-pot-container');
 const betArea = document.querySelector('.js-bet-area');
 const betSlider = document.querySelector('#bet-amount');
 const betSliderValue = document.querySelector('.js-slider-value');
+const betButton = document.querySelector('.js-bet-button');
 
 //* program állapota
 let {
@@ -53,11 +54,20 @@ function renderSlider() {
     }
 }
 
+const bet = () => {
+    const betValue = Number(betSlider.value);
+    pot += betValue;
+    playerChips -= betValue;
+    render();
+// pot + bet
+//játékos licit - bet
 
+};
 
 // Esemenyfigyelőt adunk a gombra, klikk eseményre lefut a  startGame függvény
 newGameButton.addEventListener('click', startGame);
 betSlider.addEventListener('change', render);
+betButton.addEventListener('click', bet);
 initialize();
 render();
 
@@ -120,6 +130,7 @@ function drawAndRenderPlayersCard() {
 
 // Küldünk egy kérést az API-nak ahol keverünk egy paklit és megkapjuk a deck Id-t és elmentkük a deckId változóba
 function startGame() {
+    initialize();
     fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
         .then(data => data.json()) // kapott adatot json formára alakítjuk. 
         .then(response => {
