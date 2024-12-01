@@ -38,6 +38,9 @@ function initialize() {
     } = getinitalState());
 }
 
+
+
+
 // tud e licitálni
 function canBet() {
     return playerCards.length === 2 && playerChips > 0 && pot === 0;
@@ -48,7 +51,7 @@ function renderSlider() {
     if (canBet()) {
         betArea.classList.remove('invisible');
         betSlider.setAttribute('max', playerChips);
-        betSliderValue.innerText =  betSlider.value;
+        betSliderValue.innerText = betSlider.value;
     } else {
         betArea.classList.add('invisible')
     }
@@ -59,17 +62,11 @@ const bet = () => {
     pot += betValue;
     playerChips -= betValue;
     render();
-// pot + bet
-//játékos licit - bet
+    // pot + bet
+    //játékos licit - bet
 
 };
 
-// Esemenyfigyelőt adunk a gombra, klikk eseményre lefut a  startGame függvény
-newGameButton.addEventListener('click', startGame);
-betSlider.addEventListener('change', render);
-betButton.addEventListener('click', bet);
-initialize();
-render();
 
 
 // játékos lapjainak renderelése
@@ -127,10 +124,18 @@ function drawAndRenderPlayersCard() {
 };
 
 
+function postBlinds() {
+    playerChips -= 1;
+    computerChips -= 2;
+    pot += 3;
+    render(); // frissítés
+};
 
-// Küldünk egy kérést az API-nak ahol keverünk egy paklit és megkapjuk a deck Id-t és elmentkük a deckId változóba
-function startGame() {
-    initialize();
+
+
+//leosztás indítása
+function startHand() {
+    postBlinds(); // vak tétek adminisztrálása
     fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
         .then(data => data.json()) // kapott adatot json formára alakítjuk. 
         .then(response => {
@@ -138,3 +143,18 @@ function startGame() {
             drawAndRenderPlayersCard();
         })
 };
+
+// Küldünk egy kérést az API-nak ahol keverünk egy paklit és megkapjuk a deck Id-t és elmentkük a deckId változóba
+function startGame() {
+    initialize();  // alapállapotba hozás
+    startHand();  // leosztás
+};
+
+
+
+// Esemenyfigyelőt adunk a gombra, klikk eseményre lefut a  startGame függvény
+newGameButton.addEventListener('click', startGame);
+betSlider.addEventListener('change', render);
+betButton.addEventListener('click', bet);
+initialize();
+render();
