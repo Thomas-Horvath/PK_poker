@@ -11,9 +11,11 @@ const betButton = document.querySelector('.js-bet-button');
 //* program állapota
 let {
     deckId,   // Létrehozunk egy globális változót a deck id tárolására. Tudatosan nem adunk neki értéket (null).
-    playerCards,   // kártya változó létrehozása.
+    playerCards,   // játékos lapjai
     playerChips,   // játékos zsetonjai
+    computerCards,  // számítógép lapjai
     computerChips,  // számítógép zsetonjai
+    playerBetPlaced, // játékos már licitált
     pot   // kassza értéke
 } = getinitalState();
 
@@ -24,6 +26,7 @@ function getinitalState() {
         playerCards: [],
         playerChips: 100,
         computerChips: 100,
+        playerBetPlaced: false,
         pot: 0
     };
 }
@@ -34,6 +37,7 @@ function initialize() {
         playerCards,
         playerChips,
         computerChips,
+        playerBetPlaced,
         pot
     } = getinitalState());
 }
@@ -43,8 +47,8 @@ function initialize() {
 
 // tud e licitálni
 function canBet() {
-    return playerCards.length === 2 && playerChips > 0 && pot === 0;
-}
+    return playerCards.length === 2 && playerChips > 0 && playerBetPlaced === false;
+};
 
 //slider renderelése
 function renderSlider() {
@@ -55,16 +59,50 @@ function renderSlider() {
     } else {
         betArea.classList.add('invisible')
     }
-}
+};
+
+
+function shouldComputerCall() {
+    if (computerCards.length !== 2) return false; // extra védelem ha több kártya lánne mint kettő
+    const card1Code = computerCards[0].code;
+    const card2Code = computerCards[1].code;
+    const card1Value = card1Code[0];
+    const card2Value = card2Code[0];
+    const card1Suit = card1Code[1];
+    const card2Suit = card2Code[1];
+
+    return card1Value === card2Value ||
+        ['0', 'J', 'Q', 'K', 'A'].includes(card1Value) ||
+        ['0', 'J', 'Q', 'K', 'A'].includes(card2Value) ||
+        (
+            card1Suit === card2Suit &&
+            Math.abs(Number(card1Value) - Number(card2Value)) <= 2
+        );
+};
+
+function computerMoveAfterBet() {
+    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=2`)
+        .then(data => data.json()) // kapott adatot json formára alakítjuk. 
+        .then(response => {
+            computerCards = response.cards;  // a kapott kártyákat elmentjük a változóba (tömb)
+            alert(shouldComputerCall() ? 'Call' : 'Fold');
+            console.log(computerCards);
+            // render()
+        });
+};
+
 
 const bet = () => {
     const betValue = Number(betSlider.value);
-    pot += betValue;
-    playerChips -= betValue;
-    render();
-    // pot + bet
-    //játékos licit - bet
+    pot += betValue;  // pothoz adjuk a bet értékét
+    playerChips -= betValue;  // levonjuk a játékos zsetonjaiból a bet értékét
+    playerBetPlaced = true;   // játékos licitált 
 
+    // újrarenderelés
+    render();
+
+    // ellenfél reakciója
+    computerMoveAfterBet();
 };
 
 
@@ -81,7 +119,7 @@ function renderPlayerCards() {
 
     // rendereljük 
     playerCardsContainer.innerHTML = html;
-}
+};
 
 
 // Zsetonok renderelése
@@ -98,7 +136,8 @@ function renderPot() {
     potContainer.innerHTML = `
         <div class="chip-count">Pot: ${pot}</div>
 `
-}
+};
+
 
 
 // Fő renderelés
@@ -111,6 +150,7 @@ function render() {
 
 
 
+
 function drawAndRenderPlayersCard() {
     if (deckId === null) return; // ha null akkor kilépünk a függvényből
 
@@ -119,8 +159,7 @@ function drawAndRenderPlayersCard() {
         .then(response => {
             playerCards = response.cards;  // a kapott kártyákat elmentjük a változóba (tömb)
             render()
-        }
-        )
+        });
 };
 
 
@@ -144,11 +183,21 @@ function startHand() {
         })
 };
 
+
+
+
+
+
+
 // Küldünk egy kérést az API-nak ahol keverünk egy paklit és megkapjuk a deck Id-t és elmentkük a deckId változóba
 function startGame() {
     initialize();  // alapállapotba hozás
     startHand();  // leosztás
 };
+
+
+
+
 
 
 
@@ -158,3 +207,5 @@ betSlider.addEventListener('change', render);
 betButton.addEventListener('click', bet);
 initialize();
 render();
+
+
