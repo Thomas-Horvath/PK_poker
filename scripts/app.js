@@ -1,7 +1,10 @@
 // szelektáljuk a html elemeket
 const newGameButton = document.querySelector('.js-new-game-button');
 const playerCardsContainer = document.querySelector('.js-player-cards-container');
-const chipCountContainer = document.querySelector('.js-chip-count-container');
+const computerCardsContainer = document.querySelector('.js-computer-cards-container');
+const playerChipCountContainer = document.querySelector('.js-player-chip-count-container');
+const computerActionContainer = document.querySelector('.js-computer-action');
+const computerChipCountContainer = document.querySelector('.js-computer-chip-count-container');
 const potContainer = document.querySelector('.js-pot-container');
 const betArea = document.querySelector('.js-bet-area');
 const betSlider = document.querySelector('#bet-amount');
@@ -14,6 +17,7 @@ let {
     playerCards,   // játékos lapjai
     playerChips,   // játékos zsetonjai
     computerCards,  // számítógép lapjai
+    computerAction,  // számítógép cselekedete (call, fold)
     computerChips,  // számítógép zsetonjai
     playerBetPlaced, // játékos már licitált
     pot   // kassza értéke
@@ -25,6 +29,8 @@ function getinitalState() {
         deckId: null,
         playerCards: [],
         playerChips: 100,
+        computerCards: [],
+        computerAction: null,
         computerChips: 100,
         playerBetPlaced: false,
         pot: 0
@@ -36,6 +42,8 @@ function initialize() {
         deckId,
         playerCards,
         playerChips,
+        computerCards,
+        computerAction,
         computerChips,
         playerBetPlaced,
         pot
@@ -62,7 +70,7 @@ function renderSlider() {
 };
 
 
-function shouldComputerCall() {
+function shouldComputerCall(computerCards) {
     if (computerCards.length !== 2) return false; // extra védelem ha több kártya lánne mint kettő
     const card1Code = computerCards[0].code;
     const card2Code = computerCards[1].code;
@@ -84,10 +92,15 @@ function computerMoveAfterBet() {
     fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=2`)
         .then(data => data.json()) // kapott adatot json formára alakítjuk. 
         .then(response => {
-            computerCards = response.cards;  // a kapott kártyákat elmentjük a változóba (tömb)
-            alert(shouldComputerCall() ? 'Call' : 'Fold');
-            console.log(computerCards);
-            // render()
+
+            if (shouldComputerCall(response.cards)) {
+                computerAction = 'Call';
+
+                computerCards = response.cards;
+            } else {
+                computerAction = 'Fold';
+            }
+            render()
         });
 };
 
@@ -105,29 +118,38 @@ const bet = () => {
     computerMoveAfterBet();
 };
 
-
-
-// játékos lapjainak renderelése
-function renderPlayerCards() {
+function renderCardsInContainer(cards, container) {
     let html = ""; // üres változó létrehozása
 
     // végig megyünk a tömb elemein
-    for (let card of playerCards) {
+    for (let card of cards) {
         // hozzáadjuk a változóhoz a template literallal előállított tartalmat. 
         html += `<img src="${card.image}" alt="${card.code}" />`
     };
 
     // rendereljük 
-    playerCardsContainer.innerHTML = html;
+    container.innerHTML = html;
 };
+
+
+
+// játékos lapjainak renderelése
+function renderAllCards() {
+    renderCardsInContainer(playerCards, playerCardsContainer);
+    renderCardsInContainer(computerCards, computerCardsContainer);
+};
+
+
 
 
 // Zsetonok renderelése
 function renderChips() {
-    chipCountContainer.innerHTML = `
-        <div class="chip-count">Player: ${playerChips}</div>
-        <div class="chip-count">Computer: ${computerChips}</div>
+    playerChipCountContainer.innerHTML = `
+        <div class="chip-count">Játékos: ${playerChips} zseton</div>
     `;
+    computerChipCountContainer.innerHTML = `
+        <div class="chip-count">Számítógép: ${computerChips} zseton</div>
+      `;
 };
 
 
@@ -139,13 +161,20 @@ function renderPot() {
 };
 
 
+function renderActions() {
+
+    computerActionContainer.innerHTML = computerAction ?? '';
+
+};
+
 
 // Fő renderelés
 function render() {
-    renderPlayerCards();
+    renderAllCards();
     renderChips();
     renderPot();
     renderSlider();
+    renderActions();
 };
 
 
