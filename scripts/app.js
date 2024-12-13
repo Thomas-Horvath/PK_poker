@@ -16,9 +16,11 @@ let {
     deckId,   // Létrehozunk egy globális változót a deck id tárolására. Tudatosan nem adunk neki értéket (null).
     playerCards,   // játékos lapjai
     playerChips,   // játékos zsetonjai
+    playerBets, // játékos licitje ebben a licit körben
     computerCards,  // számítógép lapjai
     computerAction,  // számítógép cselekedete (call, fold)
     computerChips,  // számítógép zsetonjai
+    computerBets, // számítógép licitje ebben a licit körben
     playerBetPlaced, // játékos már licitált
     pot   // kassza értéke
 } = getinitalState();
@@ -29,9 +31,11 @@ function getinitalState() {
         deckId: null,
         playerCards: [],
         playerChips: 100,
+        playerBets: 0,
         computerCards: [],
         computerAction: null,
         computerChips: 100,
+        computerBets: 0,
         playerBetPlaced: false,
         pot: 0
     };
@@ -42,9 +46,11 @@ function initialize() {
         deckId,
         playerCards,
         playerChips,
+        playerBets,
         computerCards,
         computerAction,
         computerChips,
+        computerBets,
         playerBetPlaced,
         pot
     } = getinitalState());
@@ -92,11 +98,21 @@ function computerMoveAfterBet() {
     fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=2`)
         .then(data => data.json()) // kapott adatot json formára alakítjuk. 
         .then(response => {
-
-            if (shouldComputerCall(response.cards)) {
-                computerAction = 'Call';
-
+            if (pot === 4) {
+                computerAction = "Check";
                 computerCards = response.cards;
+            } else if (shouldComputerCall(response.cards)) {
+                computerAction = 'Call';
+                computerCards = response.cards;
+                // játékos : bet ( vaktétek és játékos licit)
+                // számítógép: 2
+                //kassza : pot
+                // bet + 2 = pot
+                //bet - 2 = pot - 4
+                const difference = playerBets - computerBets;
+                computerChips -= difference;
+                computerBets += difference;
+                pot += difference;
             } else {
                 computerAction = 'Fold';
             }
@@ -110,7 +126,7 @@ const bet = () => {
     pot += betValue;  // pothoz adjuk a bet értékét
     playerChips -= betValue;  // levonjuk a játékos zsetonjaiból a bet értékét
     playerBetPlaced = true;   // játékos licitált 
-
+    playerBets += betValue;
     // újrarenderelés
     render();
 
@@ -194,7 +210,9 @@ function drawAndRenderPlayersCard() {
 
 function postBlinds() {
     playerChips -= 1;
+    playerBets += 1;
     computerChips -= 2;
+    computerBets += 2;
     pot += 3;
     render(); // frissítés
 };
