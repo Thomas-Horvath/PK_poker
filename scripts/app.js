@@ -116,9 +116,12 @@ function computerMoveAfterBet() {
             } else {
                 computerAction = 'Fold';
             }
-            render()
+            render();
+            endHand();
         });
 };
+
+
 
 
 const bet = () => {
@@ -243,6 +246,23 @@ function startGame() {
 };
 
 
+function endHand() {
+    setTimeout(() => {
+        if (computerAction === "Fold") {
+            playerChips += pot;
+            pot = 0;
+        }
+        deckId = null;
+        playerBets = 0;
+        computerBets = 0;
+        playerCards = [];
+        computerCards = [];
+        computerAction = null;
+        playerBetPlaced = false;
+        render();
+    }, 2000);
+
+};
 
 
 
